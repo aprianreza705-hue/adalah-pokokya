@@ -10,37 +10,25 @@ workflows:
 
       - name: Check structure
         script: |
-          echo "=== ISI FOLDER ==="
-          find project -maxdepth 3 -type f | head -50
+          echo "=== SEMUA FILE ==="
+          find project -maxdepth 4 -type f | head -80
 
-      - name: Find & Set root
+      - name: Find project root
         script: |
-          GRADLEW=$(find project -name "gradlew" | head -1)
-          if [ -z "$GRADLEW" ]; then
-            echo "gradlew tidak ditemukan, cari build.gradle..."
-            BUILD=$(find project -name "build.gradle" | grep -v "/build/" | head -1)
-            PROJECT_ROOT=$(dirname $BUILD)
-          else
-            PROJECT_ROOT=$(dirname $GRADLEW)
-          fi
+          # Cari gradlew file (bukan di dalam folder gradle/wrapper)
+          GRADLEW=$(find project -name "gradlew" -not -path "*/gradle/wrapper/*" | head -1)
+          echo "gradlew ditemukan di: $GRADLEW"
+          PROJECT_ROOT=$(dirname $GRADLEW)
           echo "Project root: $PROJECT_ROOT"
           echo $PROJECT_ROOT > /tmp/project_root.txt
 
-      - name: Generate gradlew if missing
+      - name: Set SDK & Build
         script: |
           PROJECT_ROOT=$(cat /tmp/project_root.txt)
+          echo "Masuk ke: $PROJECT_ROOT"
           cd $PROJECT_ROOT
-          if [ ! -f "gradlew" ]; then
-            echo "Generating gradlew..."
-            gradle wrapper --gradle-version 7.5
-          fi
-          chmod +x gradlew
           echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
-
-      - name: Build APK
-        script: |
-          PROJECT_ROOT=$(cat /tmp/project_root.txt)
-          cd $PROJECT_ROOT
+          chmod +x gradlew
           ./gradlew assembleDebug --stacktrace
 
     artifacts:
@@ -49,4 +37,4 @@ workflows:
     publishing:
       email:
         recipients:
-          - lialia123ptk@gmail.com
+          - aprianreza705@gmail.com
