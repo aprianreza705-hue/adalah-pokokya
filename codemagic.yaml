@@ -14,16 +14,18 @@ workflows:
         script: |
           cd project/8bp-guideline
 
-          # Fix manifest - hapus tag <package> yang invalid
-          MANIFEST="app/src/main/AndroidManifest.xml"
-          echo "=== ISI MANIFEST SEBELUM FIX ==="
-          cat $MANIFEST
+          # Fix 1: Hapus <package> tag invalid di manifest
+          sed -i '/<package/d' app/src/main/AndroidManifest.xml
 
-          # Hapus baris yang mengandung <package> tag
-          sed -i '' '/<package/d' $MANIFEST || sed -i '/<package/d' $MANIFEST
+          # Fix 2: Lihat baris 127 BallDetector.kt
+          echo "=== BARIS SEKITAR 127 ==="
+          sed -n '124,130p' app/src/main/java/com/guideline/pool/detection/BallDetector.kt
 
-          echo "=== ISI MANIFEST SETELAH FIX ==="
-          cat $MANIFEST
+          # Fix 3: Tambah 'f' suffix ke literal Double di baris 127 agar jadi Float
+          sed -i '127s/\([0-9]\+\.[0-9]\+\)\([^f]\)/\1f\2/g' app/src/main/java/com/guideline/pool/detection/BallDetector.kt
+
+          echo "=== SETELAH FIX ==="
+          sed -n '124,130p' app/src/main/java/com/guideline/pool/detection/BallDetector.kt
 
           # Setup gradle
           rm -rf gradle/wrapper/gradle-wrapper.jar
