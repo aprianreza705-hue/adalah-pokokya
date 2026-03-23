@@ -1,33 +1,32 @@
 workflows:
   android-gdrive:
     name: Build from Google Drive
-    max_build_duration: 60
-    environment:
-      java: 17
     scripts:
       - name: Download project
         script: |
           pip install gdown
-          gdown "https://drive.google.com/uc?export=download&id=1ZIXxAmLwEb9ymXnV_UjNNt-LyTGXi6SD" -O project.zip
-          unzip project.zip -d project_raw
-          ls project_raw
+          gdown "https://drive.google.com/uc?id=1Mv2hD43f-l5QF2ujvTYa3K7GDM7zkVI9" -O project.zip
+          unzip project.zip -d project
+          ls project
 
-      - name: Find & move project
+      - name: Find project root
         script: |
-          # Cari folder yang ada build.gradle
-          PROJECT_DIR=$(find project_raw -name "build.gradle" -maxdepth 3 | head -1 | xargs dirname)
-          echo "Project found at: $PROJECT_DIR"
-          cp -r "$PROJECT_DIR" ./project
+          BUILD_FILE=$(find project -name "build.gradle" | head -1)
+          PROJECT_ROOT=$(dirname $BUILD_FILE)
+          echo "Found at: $PROJECT_ROOT"
+          echo $PROJECT_ROOT > /tmp/project_root.txt
 
       - name: Set SDK
         script: |
-          echo "sdk.dir=$ANDROID_SDK_ROOT" > project/local.properties
+          PROJECT_ROOT=$(cat /tmp/project_root.txt)
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > "$PROJECT_ROOT/local.properties"
 
       - name: Build APK
         script: |
-          cd project
+          PROJECT_ROOT=$(cat /tmp/project_root.txt)
+          cd $PROJECT_ROOT
           chmod +x gradlew
-          ./gradlew assembleDebug --stacktrace
+          ./gradlew assembleDebug
 
     artifacts:
       - project/**/build/outputs/apk/**/*.apk
@@ -35,4 +34,4 @@ workflows:
     publishing:
       email:
         recipients:
-          - lialia123ptk@gmail.com
+          - aprianreza705@gmail.com
