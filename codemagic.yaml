@@ -1,23 +1,33 @@
 workflows:
   android-gdrive:
     name: Build from Google Drive
+    max_build_duration: 60
+    environment:
+      java: 17
     scripts:
       - name: Download project
         script: |
-          wget -O project.zip "https://drive.google.com/uc?export=download&id=1oXeFizdhWRyaJan1gLGx0tcgrZlDuSPl"
-          unzip project.zip -d project
-          cd project
-          ls -la
+          pip install gdown
+          gdown "https://drive.google.com/uc?export=download&id=1ZIXxAmLwEb9ymXnV_UjNNt-LyTGXi6SD" -O project.zip
+          unzip project.zip -d project_raw
+          ls project_raw
+
+      - name: Find & move project
+        script: |
+          # Cari folder yang ada build.gradle
+          PROJECT_DIR=$(find project_raw -name "build.gradle" -maxdepth 3 | head -1 | xargs dirname)
+          echo "Project found at: $PROJECT_DIR"
+          cp -r "$PROJECT_DIR" ./project
 
       - name: Set SDK
         script: |
-          echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > project/local.properties
 
       - name: Build APK
         script: |
           cd project
           chmod +x gradlew
-          ./gradlew assembleDebug
+          ./gradlew assembleDebug --stacktrace
 
     artifacts:
       - project/**/build/outputs/apk/**/*.apk
