@@ -7,26 +7,41 @@ workflows:
           pip install gdown
           gdown "https://drive.google.com/uc?id=1Mv2hD43f-l5QF2ujvTYa3K7GDM7zkVI9" -O project.zip
           unzip project.zip -d project
-          ls project
 
-      - name: Find project root
+      - name: Check structure
         script: |
-          BUILD_FILE=$(find project -name "build.gradle" | head -1)
-          PROJECT_ROOT=$(dirname $BUILD_FILE)
-          echo "Found at: $PROJECT_ROOT"
+          echo "=== ISI FOLDER ==="
+          find project -maxdepth 3 -type f | head -50
+
+      - name: Find & Set root
+        script: |
+          GRADLEW=$(find project -name "gradlew" | head -1)
+          if [ -z "$GRADLEW" ]; then
+            echo "gradlew tidak ditemukan, cari build.gradle..."
+            BUILD=$(find project -name "build.gradle" | grep -v "/build/" | head -1)
+            PROJECT_ROOT=$(dirname $BUILD)
+          else
+            PROJECT_ROOT=$(dirname $GRADLEW)
+          fi
+          echo "Project root: $PROJECT_ROOT"
           echo $PROJECT_ROOT > /tmp/project_root.txt
 
-      - name: Set SDK
+      - name: Generate gradlew if missing
         script: |
           PROJECT_ROOT=$(cat /tmp/project_root.txt)
-          echo "sdk.dir=$ANDROID_SDK_ROOT" > "$PROJECT_ROOT/local.properties"
+          cd $PROJECT_ROOT
+          if [ ! -f "gradlew" ]; then
+            echo "Generating gradlew..."
+            gradle wrapper --gradle-version 7.5
+          fi
+          chmod +x gradlew
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
 
       - name: Build APK
         script: |
           PROJECT_ROOT=$(cat /tmp/project_root.txt)
           cd $PROJECT_ROOT
-          chmod +x gradlew
-          ./gradlew assembleDebug
+          ./gradlew assembleDebug --stacktrace
 
     artifacts:
       - project/**/build/outputs/apk/**/*.apk
@@ -34,4 +49,4 @@ workflows:
     publishing:
       email:
         recipients:
-          - aprianreza705@gmail.com
+          - lialia123ptk@gmail.com
