@@ -1,6 +1,8 @@
 workflows:
   android-gdrive:
     name: Build from Google Drive
+    environment:
+      java: 17
     scripts:
       - name: Download project
         script: |
@@ -8,26 +10,18 @@ workflows:
           gdown "https://drive.google.com/uc?id=1Mv2hD43f-l5QF2ujvTYa3K7GDM7zkVI9" -O project.zip
           unzip project.zip -d project
 
-      - name: Check structure
+      - name: Fix & Build
         script: |
-          echo "=== SEMUA FILE ==="
-          find project -maxdepth 4 -type f | head -80
-
-      - name: Find project root
-        script: |
-          # Cari gradlew file (bukan di dalam folder gradle/wrapper)
-          GRADLEW=$(find project -name "gradlew" -not -path "*/gradle/wrapper/*" | head -1)
-          echo "gradlew ditemukan di: $GRADLEW"
-          PROJECT_ROOT=$(dirname $GRADLEW)
-          echo "Project root: $PROJECT_ROOT"
-          echo $PROJECT_ROOT > /tmp/project_root.txt
-
-      - name: Set SDK & Build
-        script: |
-          PROJECT_ROOT=$(cat /tmp/project_root.txt)
-          echo "Masuk ke: $PROJECT_ROOT"
-          cd $PROJECT_ROOT
+          cd project/8bp-guideline
           echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
+
+          # Hapus gradle wrapper lama yang corrupt
+          rm -rf gradle/wrapper/gradle-wrapper.jar
+
+          # Install gradle dan regenerate wrapper
+          brew install gradle
+          gradle wrapper --gradle-version 7.6.1
+
           chmod +x gradlew
           ./gradlew assembleDebug --stacktrace
 
