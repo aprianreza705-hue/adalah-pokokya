@@ -13,17 +13,22 @@ workflows:
       - name: Fix & Build
         script: |
           cd project/8bp-guideline
-          echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
 
-          # Hapus gradle wrapper lama yang corrupt
+          # Hapus wrapper lama
           rm -rf gradle/wrapper/gradle-wrapper.jar
+          rm -f gradlew gradlew.bat
 
-          # Install gradle dan regenerate wrapper
-          brew install gradle
+          # Install gradle versi lama yang kompatibel
+          brew install gradle@7
+          export PATH="/opt/homebrew/opt/gradle@7/bin:$PATH"
+
+          # Regenerate wrapper pakai gradle 7.6.1
           gradle wrapper --gradle-version 7.6.1
 
           chmod +x gradlew
-          ./gradlew assembleDebug --stacktrace
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
+
+          ./gradlew assembleDebug --stacktrace --warning-mode all
 
     artifacts:
       - project/**/build/outputs/apk/**/*.apk
