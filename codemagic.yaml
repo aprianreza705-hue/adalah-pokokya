@@ -14,21 +14,27 @@ workflows:
         script: |
           cd project/8bp-guideline
 
-          # Hapus wrapper lama
+          # Fix manifest - hapus tag <package> yang invalid
+          MANIFEST="app/src/main/AndroidManifest.xml"
+          echo "=== ISI MANIFEST SEBELUM FIX ==="
+          cat $MANIFEST
+
+          # Hapus baris yang mengandung <package> tag
+          sed -i '' '/<package/d' $MANIFEST || sed -i '/<package/d' $MANIFEST
+
+          echo "=== ISI MANIFEST SETELAH FIX ==="
+          cat $MANIFEST
+
+          # Setup gradle
           rm -rf gradle/wrapper/gradle-wrapper.jar
           rm -f gradlew gradlew.bat
-
-          # Install gradle versi lama yang kompatibel
           brew install gradle@7
           export PATH="/opt/homebrew/opt/gradle@7/bin:$PATH"
-
-          # Regenerate wrapper pakai gradle 7.6.1
           gradle wrapper --gradle-version 7.6.1
-
           chmod +x gradlew
           echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
 
-          ./gradlew assembleDebug --stacktrace --warning-mode all
+          ./gradlew assembleDebug
 
     artifacts:
       - project/**/build/outputs/apk/**/*.apk
