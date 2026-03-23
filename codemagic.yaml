@@ -1,0 +1,28 @@
+workflows:
+  android-gdrive:
+    name: Build from Google Drive
+    scripts:
+      - name: Download project
+        script: |
+          wget -O project.zip "https://drive.google.com/uc?export=download&id=1oXeFizdhWRyaJan1gLGx0tcgrZlDuSPl"
+          unzip project.zip -d project
+          cd project
+          ls -la
+
+      - name: Set SDK
+        script: |
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
+
+      - name: Build APK
+        script: |
+          cd project
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+    artifacts:
+      - project/**/build/outputs/apk/**/*.apk
+
+    publishing:
+      email:
+        recipients:
+          - lialia123ptk@gmail.com
